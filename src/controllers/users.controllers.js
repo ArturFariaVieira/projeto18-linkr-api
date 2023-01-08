@@ -1,8 +1,8 @@
-import  connection  from "../database/database.js";
+import connection from "../database/database.js";
 import bcrypt from "bcrypt";
 
 export async function createUser(req, res) {
-  const { username, email, password } = req.body;
+  const { username, email, password, picture } = req.body;
 
   try {
     const existingUsers = await connection.query(
@@ -15,11 +15,10 @@ export async function createUser(req, res) {
     }
 
     const passwordHash = bcrypt.hashSync(password, 10);
+
     await connection.query(
-      `
-    INSERT INTO users (name, email, password) 
-    VALUES ($1, $2, $3)`,
-      [username, email, passwordHash]
+      `INSERT INTO users (username, email, password, picture) VALUES ($1, $2, $3, $4)`,
+      [username, email, passwordHash, picture]
     );
 
     res.sendStatus(201);
@@ -28,4 +27,3 @@ export async function createUser(req, res) {
     return res.status(500).send(error.message);
   }
 }
-

@@ -1,10 +1,9 @@
 import bcrypt from "bcrypt";
 import { v4 as uuid } from "uuid";
-import  connection  from "../database/database.js";
+import connection from "../database/database.js";
 
 export async function signin(req, res) {
   const { email, password } = req.body;
-  console.log (req.body)
 
   const { rows: users } = await connection.query(
     `SELECT * FROM users WHERE email = $1 `,
@@ -15,6 +14,25 @@ export async function signin(req, res) {
     return res.sendStatus(401);
   }
 
+  const { rows: Token } = await connection.query(
+    `SELECT token FROM sessions WHERE "userId" = $1`,
+    [user.id]
+  );
+
+  if (Token) {
+    await connection.query(
+      `UPDATE sessions SET "active" = true WHERE "userId" = $1`,
+      [user.id]
+    );
+    const { picture, username } = user;
+    const token = Token[0].token;
+    const data = {
+      picture,
+      token,
+      username
+    };
+    return res.status(200).send(data);
+  }
   if (bcrypt.compareSync(password, user.password)) {
     const token = uuid();
     await connection.query(
