@@ -1,14 +1,11 @@
-import connection from "../database/database.js";
+import { selectUser, insertUser } from "../repository/signup.repositories.js";
 import bcrypt from "bcrypt";
 
 export async function createUser(req, res) {
   const { username, email, password, picture } = req.body;
 
   try {
-    const existingUsers = await connection.query(
-      `SELECT * FROM users WHERE email = $1 `,
-      [email]
-    );
+    const existingUsers = await selectUser(email)
 
     if (existingUsers.rowCount > 0) {
       return res.sendStatus(409);
@@ -16,10 +13,7 @@ export async function createUser(req, res) {
 
     const passwordHash = bcrypt.hashSync(password, 10);
 
-    await connection.query(
-      `INSERT INTO users (username, email, password, picture) VALUES ($1, $2, $3, $4)`,
-      [username, email, passwordHash, picture]
-    );
+    await insertUser(username, email, password, picture )
 
     res.sendStatus(201);
   } catch (error) {
