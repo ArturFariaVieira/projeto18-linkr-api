@@ -18,30 +18,30 @@ export async function signin(req, res) {
     `SELECT token FROM sessions WHERE "userId" = $1`,
     [user.id]
   );
-
-  if (Token) {
+    let token = Token[0]?.token;
+  if (token) {
     await connection.query(
       `UPDATE sessions SET "active" = true WHERE "userId" = $1`,
       [user.id]
     );
-    const { picture, username } = user;
-    const token = Token[0].token;
-    const data = {
-      picture,
-      token,
-      username
-    };
-    return res.status(200).send(data);
+    
   }
-  if (bcrypt.compareSync(password, user.password)) {
-    const token = uuid();
+  if(bcrypt.compareSync(password, user.password)) {
+    token = uuid();
     await connection.query(
       `
    INSERT INTO sessions (token, "userId") VALUES ($1, $2)`,
       [token, user.id]
     );
-    return res.send(token);
+  }else{
+    return res.sendStatus(401)
   }
 
-  res.sendStatus(401);
+  const { picture, username } = user;
+  const data = {
+    picture,
+    token,
+    username
+  };
+  return res.status(200).send(data);
 }
